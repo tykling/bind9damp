@@ -57,6 +57,7 @@ DNSTAPOBJS = dnstap.@O@ dnstap.pb-c.@O@
 # Alphabetically
 DNSOBJS =	acache.@O@ acl.@O@ adb.@O@ badcache.@O@ byaddr.@O@ \
 		cache.@O@ callbacks.@O@ catz.@O@ clientinfo.@O@ compress.@O@ \
+		dampening.@O@ \
 		db.@O@ dbiterator.@O@ dbtable.@O@ diff.@O@ dispatch.@O@ \
 		dlz.@O@ dns64.@O@ dnssec.@O@ ds.@O@ dyndb.@O@ forward.@O@ \
 		ipkeylist.@O@ iptable.@O@ journal.@O@ keydata.@O@ \
@@ -97,6 +98,7 @@ DNSTAPSRCS = dnstap.c dnstap.pb-c.c
 
 DNSSRCS =	acache.c acl.c adb.c badcache. byaddr.c \
 		cache.c callbacks.c clientinfo.c compress.c \
+		dampening.c \
 		db.c dbiterator.c dbtable.c diff.c dispatch.c \
 		dlz.c dns64.c dnssec.c ds.c dyndb.c forward.c \
 		ipkeylist.c iptable.c journal.c keydata.c keytable.c lib.c \
