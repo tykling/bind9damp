@@ -68,6 +68,7 @@
 #include <dns/acl.h>
 #include <dns/catz.h>
 #include <dns/clientinfo.h>
+#include <dns/dampening.h>
 #include <dns/dnstap.h>
 #include <dns/fixedname.h>
 #include <dns/rrl.h>
@@ -148,6 +149,7 @@ struct dns_view {
 	dns_rbt_t *			denyanswernames;
 	dns_rbt_t *			answernames_exclude;
 	dns_rrl_t *			rrl;
+	dns_dampening_t *		dampening;
 	bool			provideixfr;
 	bool			requestnsid;
 	bool			sendcookie;

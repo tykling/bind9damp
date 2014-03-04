@@ -36,6 +36,7 @@
 #include <dns/adb.h>
 #include <dns/badcache.h>
 #include <dns/cache.h>
+#include <dns/dampening.h>
 #include <dns/db.h>
 #include <dns/dispatch.h>
 #include <dns/dlz.h>
@@ -149,6 +150,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->cachedb = NULL;
 	ISC_LIST_INIT(view->dlz_searched);
 	ISC_LIST_INIT(view->dlz_unsearched);
+	view->dampening = NULL;
 	view->hints = NULL;
 	view->resolver = NULL;
 	view->adb = NULL;
@@ -445,6 +447,8 @@ destroy(dns_view_t *view) {
 		dns_acl_detach(&view->cacheacl);
 	if (view->cacheonacl != NULL)
 		dns_acl_detach(&view->cacheonacl);
+	if (view->dampening != NULL)
+		dns_dampening_destroy(view);
 	if (view->queryacl != NULL)
 		dns_acl_detach(&view->queryacl);
 	if (view->queryonacl != NULL)
