@@ -222,7 +222,9 @@ enum {
 
 	dns_nsstatscounter_tcphighwater = 57,
 
-	dns_nsstatscounter_max = 58
+	dns_nsstatscounter_dampened = 58,
+
+	dns_nsstatscounter_max = 59
 };
 
 /*%
