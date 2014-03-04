@@ -46,6 +46,7 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "rate-limit",	0 },
 	{ "cname",	0 },
 	{ "spill",	0 },
+	{ "dampening",	0 },
 	{ NULL, 	0 }
 };
 

@@ -235,6 +235,9 @@ init_desc(void) {
 	SET_NSSTATDESC(sitnomatch, "source identity token - no match",
 		       "SitNoMatch");
 	SET_NSSTATDESC(sitmatch, "source identity token - match", "SitMatch");
+	SET_NSSTATDESC(dampened,
+		       "query dropped due to dampening",
+		       "Dampened");
 	INSIST(i == dns_nsstatscounter_max);
 
 	/* Initialize resolver statistics */
