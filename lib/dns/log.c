@@ -39,6 +39,7 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "cname",	0 },
 	{ "spill",	0 },
 	{ "dnstap",	0 },
+	{ "dampening",	0 },
 	{ NULL, 	0 }
 };
 

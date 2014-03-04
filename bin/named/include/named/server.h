@@ -225,7 +225,9 @@ enum {
 
 	dns_nsstatscounter_reclimitdropped = 58,
 
-	dns_nsstatscounter_max = 59
+	dns_nsstatscounter_dampened = 59,
+
+	dns_nsstatscounter_max = 60
 };
 
 /*%

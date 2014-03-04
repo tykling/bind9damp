@@ -9393,12 +9393,13 @@ log_tat(ns_client_t *client) {
 }
 
 static inline void
-log_query(ns_client_t *client, unsigned int flags, unsigned int extflags) {
+log_query(ns_client_t *client, unsigned int flags, unsigned int extflags, int penalty) {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char typebuf[DNS_RDATATYPE_FORMATSIZE];
 	char classbuf[DNS_RDATACLASS_FORMATSIZE];
 	char onbuf[ISC_NETADDR_FORMATSIZE];
 	char ednsbuf[sizeof("E(65535)")] = { 0 };
+	char penbuf[sizeof("65536")+1];
 	dns_rdataset_t *rdataset;
 	int level = ISC_LOG_INFO;
 
@@ -9411,20 +9412,22 @@ log_query(ns_client_t *client, unsigned int flags, unsigned int extflags) {
 	dns_rdataclass_format(rdataset->rdclass, classbuf, sizeof(classbuf));
 	dns_rdatatype_format(rdataset->type, typebuf, sizeof(typebuf));
 	isc_netaddr_format(&client->destaddr, onbuf, sizeof(onbuf));
+	snprintf(penbuf, sizeof(penbuf), "%d", penalty);
 
 	if (client->ednsversion >= 0)
 		snprintf(ednsbuf, sizeof(ednsbuf), "E(%hd)",
 			 client->ednsversion);
 
 	ns_client_log(client, NS_LOGCATEGORY_QUERIES, NS_LOGMODULE_QUERY,
-		      level, "query: %s %s %s %s%s%s%s%s%s%s (%s)", namebuf,
+		      level, "query: %s %s %s %s%s%s%s%s%s%s (%s) %s", namebuf,
 		      classbuf, typebuf, WANTRECURSION(client) ? "+" : "-",
 		      (client->signer != NULL) ? "S" : "", ednsbuf,
 		      TCP(client) ? "T" : "",
 		      ((extflags & DNS_MESSAGEEXTFLAG_DO) != 0) ? "D" : "",
 		      ((flags & DNS_MESSAGEFLAG_CD) != 0) ? "C" : "",
 		      HAVECOOKIE(client) ? "V" : WANTCOOKIE(client) ? "K" : "",
-		      onbuf);
+		      onbuf,
+		      penalty < -1 ? "" : penalty < 0 ? "-" : penbuf);
 }
 
 static inline void
@@ -9478,12 +9481,14 @@ ns_query_start(ns_client_t *client) {
 	dns_rdatatype_t qtype;
 	unsigned int saved_extflags;
 	unsigned int saved_flags;
+	int client_penalty;
 
 	REQUIRE(NS_CLIENT_VALID(client));
 
 	message = client->message;
 	saved_extflags = client->extflags;
 	saved_flags = client->message->flags;
+	client_penalty = -2;
 
 	CTRACE(ISC_LOG_DEBUG(3), "ns_query_start");
 
@@ -9566,6 +9571,22 @@ ns_query_start(ns_client_t *client) {
 	}
 
 	/*
+	 * Dampening for UDP packets only. Early processing to prevent error
+	 * message reflector attacks.
+	 */
+	if ((client->attributes & NS_CLIENTATTR_TCP) == 0 &&
+	    client->view != NULL && client->view->dampening != NULL) {
+		if( DNS_DAMPENING_STATE_SUPPRESS ==
+		    dns_dampening_query(client->view->dampening,
+					&client->peeraddr, client->now,
+					&client_penalty) ) {
+			inc_stats(client, dns_nsstatscounter_dampened);
+			query_next(client, DNS_R_DROP);
+			return;
+		}
+	}
+
+	/*
 	 * Get the question name.
 	 */
 	result = dns_message_firstname(message, DNS_SECTION_QUESTION);
@@ -9590,7 +9611,7 @@ ns_query_start(ns_client_t *client) {
 	}
 
 	if (ns_g_server->log_queries)
-		log_query(client, saved_flags, saved_extflags);
+		log_query(client, saved_flags, saved_extflags, client_penalty);
 
 	/*
 	 * Check for meta-queries like IXFR and AXFR.
@@ -9601,6 +9622,11 @@ ns_query_start(ns_client_t *client) {
 	dns_rdatatypestats_increment(ns_g_server->rcvquerystats, qtype);
 
 	log_tat(client);
+
+	if (client->view != NULL && client->view->dampening != NULL)
+		dns_dampening_score_qtype(client->view->dampening,
+					  &client->peeraddr, client->now,
+					  client->message->id, qtype);
 
 	if (dns_rdatatype_ismeta(qtype)) {
 		switch (qtype) {
