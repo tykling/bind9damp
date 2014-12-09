@@ -1,0 +1,111 @@
+3624.	[bug]		Look for 'json_object_new_int64' when looking for a
+			the json library. [RT #34449]
+
+3622.	[tuning]	Eliminate an unnecessary lock when incrementing
+			cache statistics. [RT #34339]
+
+3619.	[bug]		Fixed a bug in RPZ with "recursive-only no;"
+			[RT #33776]
+
+3612.	[port]		Check whether to use -ljson or -ljson-c. [RT #34115]
+
+3609.	[bug]		Corrected a possible deadlock in applications using
+			the export version of the isc_app API. [RT #33967]
+
+3604.	[bug]		Fixed a compile-time error when building with
+			JSON but not XML. [RT #33959]
+
+3602.	[contrib]	Added DLZ Perl module, allowing Perl scripts to
+			integrate with named and serve DNS data.
+			(Contributed by John Eaglesham of Yahoo.)
+
+3598.	[cleanup]	Improved portability of map file code. [RT #33820]
+
+3597.	[bug]		Ensure automatic-resigning heaps are reconstructed
+			when loading zones in map format. [RT #33381]
+
+3595.	[port]		win32: Fix build problems introduced by change #3550.
+			[RT #33807]
+
+3570.	[bug]		Check internal pointers are valid when loading map
+			files. [RT #33403]
+
+3569.	[contrib]	Ported mysql DLZ driver to dynamically-loadable
+			module, and added multithread support. [RT #33394]
+
+3564.	[bug]		Improved handling of corrupted map files. [RT #33380]
+
+3554.	[bug]		RRL failed to correctly rate-limit upward
+			referrals and failed to count dropped error
+			responses in the statistics. [RT #33225]
+
+3551.	[bug]		resolver.querydscp[46] were uninitialized.  [RT #32686]
+
+3545.	[bug]		RRL slip behavior was incorrect when set to 1.
+			[RT #33111]
+
+3523.	[contrib]	Ported filesystem and ldap DLZ drivers to
+			dynamically-loadable modules, and added the
+			"wildcard" module based on a contribution from
+			Vadim Goncharov <vgoncharov@nic.ru>. [RT #23569]
+
+3522.	[bug]		DLZ lookups could fail to return SERVFAIL when
+			they ought to. [RT #32685]
+
+3518.	[bug]		Increase the size of dns_rrl_key.s.rtype by one bit
+			so that all dns_rrl_rtype_t enum values fit regardless
+			of whether it is teated as signed or unsigned by
+			the compiler. [RT #32792]
+
+3507.	[bug]		Statistics channel XSL had a glitch when attempting
+			to chart query data before any queries had been
+			received. [RT #32620]
+
+3494.	[func]		DNS RRL: Blunt the impact of DNS reflection and
+			amplification attacks by rate-limiting substantially-
+			identical responses. To enable, use "configure
+			--enable-rrl". [RT #28130]
+
+3490.	[bug]		When logging RDATA during update, truncate if it's
+			too long. [RT #32365]
+
+3489.	[bug]		--enable-developer now turns on ISC_LIST_CHECKINIT.
+			When cloning a rdataset do not copy the link contents.
+			[RT #32651]
+
+3484.	[bug]		Some statistics were incorrectly rendered in XML.
+			[RT #32587]
+
+3476.	[bug]		"rndc zonestatus" could report a spurious "not
+			found" error on inline-signing zones. [RT #29226]
+
+3475.	[cleanup]	Changed name of 'map' zone file format (previously
+			'fast'). [RT #32458]
+
+3472.	[bug]		The active-connections counter in the socket
+			statistics could underflow. [RT #31747]
+
+3469.	[bug]		Handle DLZ lookup failures more gracefully. Improve
+			backward compatibility between versions of DLZ dlopen
+			API. [RT #32275]
+
+3434.	[bug]		Pass client info to the DLZ findzone() entry
+			point in addition to lookup().  This makes it
+			possible for a database to answer differently
+			whether it's authoritative for a name depending
+			on the address of the client.  [RT #31775]
+
+3433.	[bug]		dlz_findzone() did not correctly handle
+			ISC_R_NOMORE. [RT #31172]
+
+3375.	[bug]		'rndc dumpdb' failed on empty caches. [RT #30808]
+
+3324.	[test]		Add better tests for ADB stats [RT #27057]
+
+3316.	[tuning]	Improved locking performance when recursing.
+			[RT #28836]
+
+3315.	[tuning]	Use multiple dispatch objects for sending upstream
+			queries; this can improve performance on busy
+			multiprocessor systems by reducing lock contention.
+			[RT #28605]

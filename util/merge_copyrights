@@ -1,0 +1,182 @@
+#!/usr/local/bin/perl -w
+#
+# Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 1998-2001, 2003  Internet Software Consortium.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# $Id$
+
+use strict;
+
+my %file_types = ();
+my %file_years = ();
+my %exists = ();
+
+open(COPYRIGHTS, "<util/copyrights") || die "can't open ./util/copyrights: $!";
+while (<COPYRIGHTS>) {
+    chomp;
+    my ($file, $type, $years) = split;
+    $file_types{$file} = $type;
+    $file_years{$file} = $years;
+}
+close(COPYRIGHTS);
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time());
+$sec = $min = $hour = $mday = $mon = $wday = $yday = $isdst = 0;
+$year += 1900;
+
+open(FILES, "git ls-files | sed 's;^;./;' |") || die "git ls-files: $!";
+while (<FILES>) {
+    chomp;
+    $exists{$_} = 1;
+}
+close(FILES);
+
+open(CHANGES, "sh util/recent_changes.sh |") || die "recent_changes.sh: $!";
+while (<CHANGES>) {
+    chomp;
+
+    # this file isn't in the repository now
+    next unless ($exists{$_});
+
+    next if (m%/\.\# |		# CVS old conflict file
+               /CVS/ |		# CVS directory
+               /.git/ |		# git directory
+               util/newcopyrights | # our output
+               \.bak$ |		# created by update_copyrights
+               /(dnssafe|openssl)/.*\.[ch]$ |	# imported
+               doc/(draft|expired|rfc)/		# imported
+             %x);
+
+    if (!$file_types{$_}) {
+	# Strip any .in extension to find out the file's real type.
+	# .in files are processed by configure to produce the target file.
+	my $base;
+	($base = $_) =~ s/\.in$//;
+
+	# Contributed code should maintain its own copyright.
+	if ($base =~ /\.\/contrib\//) {
+	     $file_types{$_} = "X";
+	} elsif ($base =~ /\.\/unit\/atf-src\//) {
+	     $file_types{$_} = "X";
+	} elsif ($base =~ /\/openssl-[a-z0-9.]*-patch$/) {
+	    $file_types{$_} = "X";
+	} elsif ($base =~ /\.(c|h|css)$/) {
+	    $file_types{$_} = "C";
+        } elsif ($base =~ /\.y$/) {
+	    $file_types{$_} = "YACC";
+        } elsif ($base =~ /\.pl$/i) {
+	    $file_types{$_} = "PERL";
+        } elsif ($base =~ /\.py$/i) {
+	    $file_types{$_} = "PYTHON";
+        } elsif ($base =~ /\.sh$/) {
+	    $file_types{$_} = "SH";
+        } elsif ($base =~ /\.docbook$/ ||
+		 $base =~ /.xsl$/ ||
+		 $base =~ /.xml$/) {
+	    $file_types{$_} = "SGML";
+        } elsif ($base =~ /doc\/arm\/.*\.html$/) {
+	    $file_types{$_} = "X";
+        } elsif ($base =~ /\.html$/) {
+	    $file_types{$_} = "HTML";
+        } elsif ($base =~ /\.(man|[0-9])$/) {
+	    $file_types{$_} = "MAN";
+	} elsif ($base =~ /\/Makefile$/) {
+	    $file_types{$_} = "MAKE";
+	} elsif ($base =~ /\/(named|rndc|good|bad).{0,2}\.conf$/) {
+	    $file_types{$_} = "CONF-C";
+	} elsif ($base =~ /\/checkconf\/(good|bad)-.*\.conf$/) {
+	    $file_types{$_} = "CONF-C";
+	} elsif ($base =~ /\/resolv.?\.conf$/) {
+	    $file_types{$_} = "CONF-SH";
+	} elsif ($base =~ /\.(db|hint)$/) {
+	    $file_types{$_} = "ZONE";
+	} elsif ($base =~ /(\/\.gitignore|Atffile|\.(gif|jpg))$/i) {
+	    $file_types{$_} = "X";
+	} elsif ($base =~ /\.(def|dep|dsp|dsw|mak|sln)$/i) {
+	    $file_types{$_} = "X";
+	} elsif ($base =~ /\.(vcxproj(|\.(user|filters)))$/i) {
+	    $file_types{$_} = "X";
+	} elsif ($base =~ /\.rnc$/i) {
+	    $file_types{$_} = "RNC";
+	} elsif ($base =~ /^\.\/EXCLUDED$/i) {
+	    $file_types{$_} = "X";
+	} elsif ($base =~ /\.bat$/i) {
+	    $file_types{$_} = "BAT";
+	} elsif ($base =~ /\/named\.args$/i) {
+	    $file_types{$_} = "X";
+	} elsif ($base =~ /\/README$/i) {
+	    $file_types{$_} = "TXT.BRIEF";
+	} else {
+	    $file_types{$_} = "?";
+	}
+	my $m_year = int(`sh util/file_year.sh $_`);
+	if ($m_year != $year) {
+	    print "$_: must set copyright year(s) manually\n";
+	    $file_years{$_} = "????";
+	} else {
+	    $file_years{$_} = "$year";
+	}
+    } else {
+        if (! defined($file_years{$_}) || $file_years{$_} eq "????") {
+            print "$_: must set copyright year(s) manually\n";
+	    $file_years{$_} = "????";
+            next;
+        }
+
+	# track the modification years even if we are not going to be
+	# updating the copyrights.
+	# next if $file_types{$_} eq "X";
+	next if ($file_years{$_} =~ /^PARENT:/);
+	next if ($file_years{$_} eq "DOCBOOK");
+
+	my @years = split(/,/, $file_years{$_});
+	my $has_current = 0;
+	foreach my $fyear (@years) {
+	    if ($fyear == $year) {
+		$has_current = 1;
+	    }
+	}
+	if (!$has_current) {
+	    $file_years{$_} .= ",$year";
+	}
+    }
+}
+close(CHANGES);
+
+open(NEWCOPYRIGHTS, ">util/newcopyrights") ||
+    die "can't open newcopyrights: $!";
+foreach my $file (sort(keys(%file_types))) {
+    print NEWCOPYRIGHTS "$file";
+    my $len = length($file);
+    my $tabs = 0;
+    if ($len >= 48) {
+	$tabs = 1;
+    } else {
+	my $needed = int (48 - $len);
+	$tabs = int ($needed / 8);
+	if ($needed % 8 != 0) {
+	    $tabs++;
+	}
+    }
+    for (my $i = 0; $i < $tabs; $i++) {
+	printf NEWCOPYRIGHTS "\t";
+    }
+    printf NEWCOPYRIGHTS "%s\t%s\n", $file_types{$file}, $file_years{$file};
+
+    if (($file_years{$file} eq "????") || ($file_types{$file} eq "?")) {
+        print "Unknown file type or year: $file\n";
+    }
+}
+close(NEWCOPYRIGHTS);
