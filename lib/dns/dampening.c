@@ -39,6 +39,7 @@
    (impl)->statistics.field = after; \
 }  while(0)
 #define DAMPENING_STATISTICS_INC(impl, field)	do { (impl)->statistics.field++; } while(0)
+#define DAMPENING_STATISTICS_DEC(impl, field)	do { (impl)->statistics.field--; } while(0)
 
 
 static isc_result_t queue_init(isc_mem_t *, dns_dampening_implementation_t *, dns_dampening_t *, uint16_t);
@@ -124,6 +125,7 @@ static int
 update_penalty(const dns_dampening_t * conf, dns_dampening_entry_t * entry,
 	       uint16_t points, isc_stdtime_t now) {
    int timediff;
+   dns_dampening_implementation_t *impl;
    
    INSIST(conf != NULL);
    INSIST(entry != NULL);
@@ -143,11 +145,17 @@ update_penalty(const dns_dampening_t * conf, dns_dampening_entry_t * entry,
    if(entry->dampening == 1 && entry->penalty < conf->limit.disable_dampening) {
       entry->dampening = 0;
       log_dampening(conf, &entry->netaddr, entry->dampening);
+      for(impl = conf->workers; impl - conf->workers < conf->workers_count; impl++) {
+         DAMPENING_STATISTICS_DEC(impl, dampened);
+      }
    }
    
    if(entry->dampening == 0 && entry->penalty > conf->limit.enable_dampening) {
       entry->dampening = 1;
       log_dampening(conf, &entry->netaddr, entry->dampening);
+      for(impl = conf->workers; impl - conf->workers < conf->workers_count; impl++) {
+         DAMPENING_STATISTICS_INC(impl, dampened);
+      }
    }
    
    if(entry->penalty < conf->limit.irrelevant &&
@@ -193,17 +201,21 @@ dns_dampening_query(dns_dampening_t * damp, const isc_sockaddr_t * addr,
       
       if(damp->statistics.report_interval > 0 &&
 	 damp->statistics.report_interval + impl->statistics.last_report <= now) {
+	 unsigned int tmp;
 	 if(isc_log_wouldlog(dns_lctx, ISC_LOG_INFO))
 	   isc_log_write(dns_lctx, DNS_LOGCATEGORY_DAMPENING,
 			 DNS_LOGMODULE_REQUEST, ISC_LOG_INFO,
-			 "Stats for #%d: queries %u/%u/%u: lock=%ld.%06ld, search=%ld.%06ld, update=%ld.%06ld, add=%ld.%06ld",
+			 "Stats for #%d: dampened: %u - queries %u/%u/%u: lock=%ld.%06ld, search=%ld.%06ld, update=%ld.%06ld, add=%ld.%06ld",
 			 impl - damp->workers,
+			 impl->statistics.dampened,
 			 impl->statistics.allowed, impl->statistics.denied, impl->statistics.skipped,
 			 impl->statistics.lock.tv_sec, impl->statistics.lock.tv_usec,
 			 impl->statistics.search.tv_sec, impl->statistics.search.tv_usec,
 			 impl->statistics.update.tv_sec, impl->statistics.update.tv_usec,
 			 impl->statistics.add.tv_sec, impl->statistics.add.tv_usec);
+	 tmp = impl->statistics.dampened;
 	 memset(&impl->statistics, 0, sizeof(impl->statistics));
+	 impl->statistics.dampened = tmp;
 	 impl->statistics.last_report = now;
       }
       

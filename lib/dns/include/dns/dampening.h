@@ -34,7 +34,7 @@ typedef struct dns_dampening_implementation {
    isc_mutex_t lock;
    struct {
       struct timeval lock, search, update, add;
-      unsigned int allowed, denied, skipped;
+      unsigned int allowed, denied, skipped, dampened;
       isc_stdtime_t last_report;
    } statistics;
 }  dns_dampening_implementation_t;
