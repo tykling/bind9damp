@@ -166,7 +166,7 @@ update_penalty(const dns_dampening_t * conf, dns_dampening_entry_t * entry,
 }
 
 dns_dampening_state_t
-dns_dampening_query(dns_dampening_t * damp, const isc_sockaddr_t * addr,
+dns_dampening_query(dns_dampening_t * damp, const char * viewname, const isc_sockaddr_t * addr,
                     isc_stdtime_t now, int * penalty) {
    isc_netaddr_t netaddr, prefix;
    dns_dampening_state_t final_state = DNS_DAMPENING_STATE_NORMAL, state = DNS_DAMPENING_STATE_NORMAL;
@@ -204,7 +204,8 @@ dns_dampening_query(dns_dampening_t * damp, const isc_sockaddr_t * addr,
          if(isc_log_wouldlog(dns_lctx, ISC_LOG_INFO))
             isc_log_write(dns_lctx, DNS_LOGCATEGORY_DAMPENING,
                           DNS_LOGMODULE_REQUEST, ISC_LOG_INFO,
-                          "Stats for #%ld: dampened: %u - queries %u/%u/%u: lock=%ld.%06ld, search=%ld.%06ld, update=%ld.%06ld, add=%ld.%06ld",
+                          "Stats for %s#%ld: dampened: %u - queries %u/%u/%u: lock=%ld.%06ld, search=%ld.%06ld, update=%ld.%06ld, add=%ld.%06ld",
+                          viewname,
                           impl - damp->workers,
                           impl->statistics.dampened,
                           impl->statistics.allowed, impl->statistics.denied, impl->statistics.skipped,

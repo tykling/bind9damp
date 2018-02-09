@@ -80,7 +80,7 @@ typedef struct dns_dampening {
 
 } dns_dampening_t;
 
-dns_dampening_state_t dns_dampening_query(dns_dampening_t *, const isc_sockaddr_t *, isc_stdtime_t, int *);
+dns_dampening_state_t dns_dampening_query(dns_dampening_t *, const char * viewname, const isc_sockaddr_t *, isc_stdtime_t, int *);
 void dns_dampening_score_qtype(dns_dampening_t *, const isc_sockaddr_t *, isc_stdtime_t, dns_messageid_t, int);
 void dns_dampening_score_size(dns_dampening_t *, const isc_sockaddr_t *, isc_stdtime_t, int);
 isc_result_t dns_dampening_init(dns_view_t *, int);
