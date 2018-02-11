@@ -9156,7 +9156,7 @@ ns_query_start(ns_client_t *client) {
 	if ((client->attributes & NS_CLIENTATTR_TCP) == 0 &&
 	    client->view != NULL && client->view->dampening != NULL) {
 		if( DNS_DAMPENING_STATE_SUPPRESS ==
-		    dns_dampening_query(client->view->dampening,
+		    dns_dampening_query(client->view->dampening, client->view->name,
 					&client->peeraddr, client->now,
 					&client_penalty) ) {
 			inc_stats(client, dns_nsstatscounter_dampened);
