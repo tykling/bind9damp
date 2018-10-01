@@ -13,7 +13,6 @@
 #include <isc/print.h>
 #include <isc/stdlib.h>
 #include <isc/string.h>
-#include <isc/util.h>
 #include <dns/db.h>
 #include <dns/fixedname.h>
 #include <dns/rdata.h>
@@ -25,6 +24,7 @@
  */
 
 #include <isc/mem.h>
+#include <isc/util.h>
 #include <dns/dampening.h>
 #include <dns/log.h>
 #include <dns/view.h>
